@@ -21,7 +21,7 @@ Except `RQpy` which is not yet avaliable on PyPi. To install `RQpy` clone the re
 ### Usage 
 
 At the moment, all of the functions (only a few at the moment) are available from the top level directory. For example,
-```
+```python
 import vae
 
 traces, metadata = vae.pre_process_PD2(path=files[ii], fs=fs, ioffset=ioffset, rload=rload, 
