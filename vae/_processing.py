@@ -9,7 +9,7 @@ __all__ = ["pre_process_PD2"]
 
 
 def pre_process_PD2(path, fs, ioffset, rload, rsh, qetbias, chan, det, ds_factor=6, trunc=0,
-                    lgcsave=False, savepath = ''):
+                    lgcsave=False, savepath = '', convtoamps=None):
     """
     Function preprocess raw traces for PD2 detector. Can be generalized for multichannel detectors. 
     
@@ -45,6 +45,10 @@ def pre_process_PD2(path, fs, ioffset, rload, rsh, qetbias, chan, det, ds_factor
         If True, the processed dumps are saved in savepath. defaults to False
     savepath : str, optional
         The path where the processed dumps should be saved. Ignored if not lgcsave
+    convtoamps : float, Nonetype, optional
+        The conversion from raw ADC bins to TES current. Should be in units of 
+        [Amps/ADC bins]. Defaults to None, which means that it will just be loaded
+        from the .midas file. 
         
     Returns
     -------
@@ -59,7 +63,8 @@ def pre_process_PD2(path, fs, ioffset, rload, rsh, qetbias, chan, det, ds_factor
             'dump' : the dump file number
             
     """
-    x, info_dict = rp.io.get_traces_midgz(path, chan, det, lgcskip_empty=True, lgcreturndict=True)
+    x, info_dict = rp.io.get_traces_midgz(path, chan, det, lgcskip_empty=True, lgcreturndict=True,
+                                         convtoamps=convtoamps)
     x = x[..., trunc:]
     ser_ev = np.zeros(x.shape[0], dtype=int)
     series = path.split('/')[-2]
