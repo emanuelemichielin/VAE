@@ -73,6 +73,24 @@ def load_preprocessed_meta(path):
     metadata = dd.io.load(path)
     return metadata
 
+def load_labels(path):
+     """
+    Function to labels for PD2 dump
+    
+    Parameters
+    ----------
+    path : str
+        Absolute path to labels
+        
+    Returns 
+    -------
+    labels : pandas.DataFrame
+        All the RQ's from the DM analysis for 
+        PD2
+    """
+    labels = pd.read_hdf(path, 'labels')    
+    return labels
+
 def parse_MC_file(fname,key,flatten=True, mode = '1d'):
     df = pd.read_hdf(fname,key=key,mode='r')
     
