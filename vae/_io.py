@@ -1,12 +1,14 @@
 import numpy as np
+import pandas as pd
 import qetpy as qp
 import rqpy as rp
+import deepdish as dd
 import os
 from glob import glob
-import deepdish as dd
+
 
 __all__ = ["save_preprocessed", "load_preprocessed_traces", "load_preprocessed_meta", 
-           "parse_MC_file"]
+           "parse_MC_file", "get_traces"]
 
 
 def save_preprocessed(savepath, traces, metadata):
@@ -72,6 +74,74 @@ def load_preprocessed_meta(path):
     """
     metadata = dd.io.load(path)
     return metadata
+
+def load_labels(path):
+    """
+    Function to labels for PD2 dump
+    
+    Parameters
+    ----------
+    path : str
+        Absolute path to labels
+        
+    Returns 
+    -------
+    labels : pandas.DataFrame
+        All the RQ's from the DM analysis for 
+        PD2
+    """
+    labels = pd.read_hdf(path, 'labels')
+    return labels
+
+def get_traces(eventnumber,  
+               ev_mapping=None,
+               map_path='/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/file_mapping.h5', 
+               tracelength=3084,
+              ):
+    """
+    Function to load traces based on given event numbers. 
+    It assumes that the mapping from event number to 
+    file path is already saved somewhere. 
+        
+    Parameters
+    ----------
+    eventnumber : int, list of ints
+        Event number, or list of event numbers to load.
+        Note: must be in the format seriesnumber_originaleventnumber
+    ev_mapping : Pandas.DataFrame, optional
+        The mapping from event number to filename. If None,
+        the mapping will be loaded from map_path.
+    map_path : str, optional
+        Aboslute path to the dataframe that maps event number to 
+        filepath location for the dump of traces
+    tracelength : int, optional
+       The length of the traces being loaded. This is nessesary
+       to determine the initial array size for the returned traces
+       
+    Returns
+    -------
+    good_traces : array
+        An array of traces corresponding to the user specified
+        event numbers. Will be of shape (#traces, #channels, #bins)
+    """
+    
+    if np.isscalar(eventnumber):
+        eventnumber = [eventnumber]
+    good_traces = np.zeros(shape=(len(eventnumber), 1, tracelength))
+    if ev_mapping is None:
+        ev_mapping = pd.read_hdf(map_path,'map')
+    cuts = [ev_mapping.eventnumber == ev for ev in eventnumber]
+    cut = np.logical_or.reduce(cuts)
+    filepaths = np.unique(ev_mapping[cut].filepath)
+    for file in filepaths:
+        traces, evnums = load_preprocessed_traces(file)
+        ctemp = [evnums==ev for ev in eventnumber]
+        ctraces = np.logical_or.reduce(ctemp)
+        for ii, trace in enumerate(traces[ctraces]):
+            ind = np.where(eventnumber==evnums[ctraces][ii])
+            good_traces[ind] = trace
+    return good_traces
+
 
 def parse_MC_file(fname,key,flatten=True, mode = '1d'):
     df = pd.read_hdf(fname,key=key,mode='r')
