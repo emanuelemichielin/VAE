@@ -82,7 +82,7 @@ def pre_process_PD2(path, fs, ioffset, rload, rsh, qetbias, chan, det, ds_factor
                 'dump' : dump_number}
     traces = {'traces' : power_ds[:,np.newaxis,:], 'eventnumber' : ser_ev}
     if lgcsave:
-        vae.save_preprocessed(savepath, traces, metadata)
+        vae._io._save_preprocessed(savepath, traces, metadata)
     return traces, metadata
 
 
@@ -144,3 +144,36 @@ def partition_data(eventnumbers, pct_val=.2, pct_test=.2, savename=None, lgcsave
             raise ValueError('Please provide a valid savename')
             
     return partition
+
+def _store_rq_labels(traces_path, rq_path, savepath):
+    """
+    Utility function to store all conventional features 
+    from PD2 DM analysis for corresponding events. 
+    
+    Parameters
+    ----------
+    traces_path : list of str
+        Absolute path to folder of processed traces
+    rq_path : str
+        Absolute path to RQ dataframe
+    savepath : str
+        Absolute path where the labels should be saved
+        
+    Returns
+    -------
+    None
+    """
+    with open(rq_path, 'rb') as rq_file:
+        rq = pkl.load(rq_file)
+    rq.sort_values('ser_ev', inplace=True)
+    
+    for p in traces_path: 
+        traces, eventnumbers = vae.load_preprocessed_traces(p)
+        label = f"{p.split('/')[-1][:20]}labels.h5"
+        cuts = np.zeros(rq.shape[0], dtype=bool)
+        for ev in eventnumbers:
+            cuts = cuts | (rq.ser_ev == ev)
+        df_labels = rq[cuts]
+        if not np.all(df_labels.ser_ev == eventnumbers):
+            raise ValueError('Shape dump and rq labels do not match')
+        df_labels.to_hdf(savepath+label, 'labels')
