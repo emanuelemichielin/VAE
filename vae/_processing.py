@@ -2,9 +2,10 @@ import numpy as np
 import rqpy as rp
 import qetpy as qp
 import vae
+import pickle as pkl
 
 
-__all__ = ["pre_process_PD2"]
+__all__ = ["pre_process_PD2", "partition_data"]
 
 
 
@@ -84,3 +85,62 @@ def pre_process_PD2(path, fs, ioffset, rload, rsh, qetbias, chan, det, ds_factor
         vae.save_preprocessed(savepath, traces, metadata)
     return traces, metadata
 
+
+
+
+def partition_data(eventnumbers, pct_val=.2, pct_test=.2, savename=None, lgcsave=False, seed=42):
+    """
+    Function to randomize and split event numbers into a training/validation/testing set.
+    The percentange of training data = 1 - pct_val - pct_test
+    
+    Parameters
+    ----------
+    eventnumbers : array, list
+        array of event numbers (in format: series_event) to be divided
+    pct_val : float, optional
+        Pectentage of data to be placed in validation set (must be float
+        between 0 and 1)
+    pct_test : float, optional
+        Pectentage of data to be placed in testing set (must be float
+        between 0 and 1)
+    savename : str, NoneType, optional
+        Absolute path to where partition should be saved
+    lgcsave : bool, optional
+        If True, the partition will be saved (provided savename
+        is not None)
+    seed : int, optional
+        Seed for the random number generator used to shuffle 
+        the data
+        
+    Returns
+    -------
+    partition : dict
+        The partitioned data dictionary with keys:
+            'train' : array of event numbers for training data
+            'validation' : array of event numbers for validataion
+            'test' : array of event numbers for test data        
+    """
+    
+    if isinstance(eventnumbers, list):
+        eventnumbers = np.asarray(eventnumbers)
+    
+    np.random.seed(42)
+    rand_ints = np.random.choice(len(eventnumbers), len(eventnumbers), replace=False)
+    rand_events = eventnumbers[rand_ints]
+    
+    nval = int(pct_val*len(eventnumbers))
+    ntest = int(pct_test*len(eventnumbers))
+
+    partition = {}
+    partition['validation'] = rand_events[:nval] 
+    partition['test'] = rand_events[nval:(nval+ntest)] 
+    partition['train'] = rand_events[(nval+ntest):] 
+    
+    if lgcsave:
+        if savename is not None:
+            with open(savename+'.pkl','wb') as file:
+                pkl.dump(partition, file)
+        else:
+            raise ValueError('Please provide a valid savename')
+            
+    return partition

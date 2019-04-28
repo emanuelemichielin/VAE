@@ -5,10 +5,11 @@ import rqpy as rp
 import deepdish as dd
 import os
 from glob import glob
+import pickle as pkl
 
 
 __all__ = ["save_preprocessed", "load_preprocessed_traces", "load_preprocessed_meta", 
-           "parse_MC_file", "get_traces"]
+           "parse_MC_file", "get_traces", "load_partition"]
 
 
 def save_preprocessed(savepath, traces, metadata):
@@ -143,6 +144,43 @@ def get_traces(eventnumber,
     return good_traces
 
 
+
+def load_partition(basepath, file):
+    """
+    Function to load event numbers for partitioned
+    datasets. 
+    
+    Parameters
+    ----------
+    basepath : str
+        Absolute path to the directory where all 
+        the partitions are saved.
+    file : str
+        The name of the partition to load, i.e 'triggers'
+    
+    Returns
+    -------
+    partition : dict
+        The partitioned data dictionary with keys:
+            'train' : array of event numbers for training data
+            'validation' : array of event numbers for validataion
+            'test' : array of event numbers for test data  
+    """
+    
+    file = file.split('.')[0] #remove file extentions
+    try:
+        with open(basepath+file+'.pkl', 'rb') as file:
+            partition = pkl.load(file)
+        return partition
+    except FileNotFoundError:
+        files = glob(basepath+'/*')
+        available_files = []
+        for f in files:
+            available_files.append(f.split('/')[-1].split('.')[0])
+        raise ValueError(f'File not found: please choose from: {available_files}')
+        
+    
+
 def parse_MC_file(fname,key,flatten=True, mode = '1d'):
     df = pd.read_hdf(fname,key=key,mode='r')
     
@@ -151,4 +189,5 @@ def parse_MC_file(fname,key,flatten=True, mode = '1d'):
     epos  = np.stack([[p[1], p[2], p[3], p[4], p[0]] for p in df['epos'].values])
     S     = np.stack([ ([p[-1]] if mode == '1d' else [p[-1]]*11) for p in df['epos'].values])
     return tms,epos,S
+
 
