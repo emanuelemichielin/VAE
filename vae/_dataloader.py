@@ -1,6 +1,7 @@
 import torch
 from torch.utils import data
 import vae
+from vae import PD2_LABEL_COLUMNS
 
 __all__ = ["PD2dataset"]
 
@@ -15,25 +16,30 @@ class PD2dataset(data.Dataset):
         Initialization of data object. eventnumbers
         are stored and will be iterated over and passed
         to vae.get_traces() during the training process. 
-        If using during VAE training, labels are not
-        needed and will default to using eventnumbers
-        for labels. This way the ground truth values
-        can be looked up after the fact based on eventnumber.
+        If labels are not needed (ie, training a VAE, then
+        leave as none and they will default to the 
+        eventnumbers). Labes can either be passed as an 
+        array, or a string corresponding to the truth value
+        to be loaded from the previously calibrated data. 
+        the string must be one of the keys found in 
+        vae._globas.PD2_LABEL_COLUMNS.
         
         Parameters
         ----------
         eventnumbers : array
             Array of event numbers to use for training/testing
-        labels : array, optional
+        labels : array, str, NoneType, optional
             Groud truth values correpsonding to each item in 
-            eventnumbers
+            eventnumbers. 
         """
 
         self.list_IDs = eventnumbers
         if labels is None:
-            self.labels = eventnumbers
-        else:
-            self.labels = labels
+            labels = eventnumbers
+        elif isinstance(labels, str):
+            if labels not in PD2_LABEL_COLUMNS:
+                raise ValueError(f'{labels} not in PD2_LABEL_COLUMNS')
+        self.labels = labels
 
     def __len__(self):
         """Length of the datapoints in the dataset"""
@@ -50,7 +56,11 @@ class PD2dataset(data.Dataset):
         ID = self.list_IDs[index]
         # Load data and get label
         X = vae.get_traces(ID)
-        y = self.labels[index]
+        if isinstance(self.labels, str):
+            labels = vae.get_labels(ID)
+            y = labels[self.labels].values
+        else:
+            y = self.labels[index]
         return X, y
 
 
