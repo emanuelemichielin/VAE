@@ -30,7 +30,7 @@ def get_scale_factor(path):
     scale_factors = []
     weights = []
     for f in files:
-        meta = vae._io._load_preprocessed_meta(f)
+        meta = vae.io._utils._load_preprocessed_meta(f)
         scale_factors.append(meta['scale_factor'])
         weights.append(meta['n_traces'])
     scale = np.average(scale_factors, weights=weights)

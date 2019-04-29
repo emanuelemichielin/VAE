@@ -3,7 +3,7 @@ import rqpy as rp
 import qetpy as qp
 import vae
 import pickle as pkl
-from vae.io._utils import _save_preprocessed
+from vae.io._utils import _save_preprocessed, _load_preprocessed_traces
 
 
 __all__ = ["pre_process_PD2", "partition_data"]
@@ -166,10 +166,10 @@ def _store_rq_labels(traces_path, rq_path, savepath):
     """
     with open(rq_path, 'rb') as rq_file:
         rq = pkl.load(rq_file)
-    rq.sort_values('ser_ev', inplace=True)
+    #rq.sort_values('ser_ev', inplace=True)
     
-    for p in traces_path: 
-        traces, eventnumbers = vae.load_preprocessed_traces(p)
+    for p in sorted(traces_path): 
+        traces, eventnumbers = _load_preprocessed_traces(p)
         label = f"{p.split('/')[-1][:20]}labels.h5"
         cuts = np.zeros(rq.shape[0], dtype=bool)
         for ev in eventnumbers:
