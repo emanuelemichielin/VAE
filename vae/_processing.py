@@ -2,9 +2,10 @@ import numpy as np
 import rqpy as rp
 import qetpy as qp
 import vae
+import pickle as pkl
 
 
-__all__ = ["pre_process_PD2"]
+__all__ = ["pre_process_PD2", "partition_data"]
 
 
 
@@ -81,6 +82,98 @@ def pre_process_PD2(path, fs, ioffset, rload, rsh, qetbias, chan, det, ds_factor
                 'dump' : dump_number}
     traces = {'traces' : power_ds[:,np.newaxis,:], 'eventnumber' : ser_ev}
     if lgcsave:
-        vae.save_preprocessed(savepath, traces, metadata)
+        vae._io._save_preprocessed(savepath, traces, metadata)
     return traces, metadata
 
+
+
+
+def partition_data(eventnumbers, pct_val=.2, pct_test=.2, savename=None, lgcsave=False, seed=42):
+    """
+    Function to randomize and split event numbers into a training/validation/testing set.
+    The percentange of training data = 1 - pct_val - pct_test
+    
+    Parameters
+    ----------
+    eventnumbers : array, list
+        array of event numbers (in format: series_event) to be divided
+    pct_val : float, optional
+        Pectentage of data to be placed in validation set (must be float
+        between 0 and 1)
+    pct_test : float, optional
+        Pectentage of data to be placed in testing set (must be float
+        between 0 and 1)
+    savename : str, NoneType, optional
+        Absolute path to where partition should be saved
+    lgcsave : bool, optional
+        If True, the partition will be saved (provided savename
+        is not None)
+    seed : int, optional
+        Seed for the random number generator used to shuffle 
+        the data
+        
+    Returns
+    -------
+    partition : dict
+        The partitioned data dictionary with keys:
+            'train' : array of event numbers for training data
+            'validation' : array of event numbers for validataion
+            'test' : array of event numbers for test data        
+    """
+    
+    if isinstance(eventnumbers, list):
+        eventnumbers = np.asarray(eventnumbers)
+    
+    np.random.seed(42)
+    rand_ints = np.random.choice(len(eventnumbers), len(eventnumbers), replace=False)
+    rand_events = eventnumbers[rand_ints]
+    
+    nval = int(pct_val*len(eventnumbers))
+    ntest = int(pct_test*len(eventnumbers))
+
+    partition = {}
+    partition['validation'] = rand_events[:nval] 
+    partition['test'] = rand_events[nval:(nval+ntest)] 
+    partition['train'] = rand_events[(nval+ntest):] 
+    
+    if lgcsave:
+        if savename is not None:
+            with open(savename+'.pkl','wb') as file:
+                pkl.dump(partition, file)
+        else:
+            raise ValueError('Please provide a valid savename')
+            
+    return partition
+
+def _store_rq_labels(traces_path, rq_path, savepath):
+    """
+    Utility function to store all conventional features 
+    from PD2 DM analysis for corresponding events. 
+    
+    Parameters
+    ----------
+    traces_path : list of str
+        Absolute path to folder of processed traces
+    rq_path : str
+        Absolute path to RQ dataframe
+    savepath : str
+        Absolute path where the labels should be saved
+        
+    Returns
+    -------
+    None
+    """
+    with open(rq_path, 'rb') as rq_file:
+        rq = pkl.load(rq_file)
+    rq.sort_values('ser_ev', inplace=True)
+    
+    for p in traces_path: 
+        traces, eventnumbers = vae.load_preprocessed_traces(p)
+        label = f"{p.split('/')[-1][:20]}labels.h5"
+        cuts = np.zeros(rq.shape[0], dtype=bool)
+        for ev in eventnumbers:
+            cuts = cuts | (rq.ser_ev == ev)
+        df_labels = rq[cuts]
+        if not np.all(df_labels.ser_ev == eventnumbers):
+            raise ValueError('Shape dump and rq labels do not match')
+        df_labels.to_hdf(savepath+label, 'labels')
