@@ -3,6 +3,7 @@ import rqpy as rp
 import qetpy as qp
 import vae
 import pickle as pkl
+from vae.io._utils import _save_preprocessed
 
 
 __all__ = ["pre_process_PD2", "partition_data"]
@@ -82,7 +83,7 @@ def pre_process_PD2(path, fs, ioffset, rload, rsh, qetbias, chan, det, ds_factor
                 'dump' : dump_number}
     traces = {'traces' : power_ds[:,np.newaxis,:], 'eventnumber' : ser_ev}
     if lgcsave:
-        vae._io._save_preprocessed(savepath, traces, metadata)
+        _save_preprocessed(savepath, traces, metadata)
     return traces, metadata
 
 

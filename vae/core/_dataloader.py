@@ -2,6 +2,7 @@ import torch
 from torch.utils import data
 import vae
 from vae import PD2_LABEL_COLUMNS
+from vae import io
 
 __all__ = ["PD2dataset"]
 
@@ -55,9 +56,9 @@ class PD2dataset(data.Dataset):
         # Select sample
         ID = self.list_IDs[index]
         # Load data and get label
-        X = vae.get_traces(ID)
+        X = io.get_traces(ID)
         if isinstance(self.labels, str):
-            labels = vae.get_labels(ID)
+            labels = io.get_labels(ID)
             y = labels[self.labels].values
         else:
             y = self.labels[index]
