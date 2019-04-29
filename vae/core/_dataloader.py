@@ -2,6 +2,7 @@ import torch
 from torch.utils import data
 import vae
 from vae import PD2_LABEL_COLUMNS
+from vae import io
 
 __all__ = ["PD2dataset"]
 
@@ -11,7 +12,7 @@ class PD2dataset(data.Dataset):
     PyTorch. This class serves as a generator for the 
     vae.get_traces() function. 
     """
-    def __init__(self, eventnumbers, labels=None):
+    def __init__(self, eventnumbers, labels=None, scaledata=None):
         """
         Initialization of data object. eventnumbers
         are stored and will be iterated over and passed
@@ -31,6 +32,9 @@ class PD2dataset(data.Dataset):
         labels : array, str, NoneType, optional
             Groud truth values correpsonding to each item in 
             eventnumbers. 
+        scaledata : float, NoneType, optional
+            If a value is given, then all the data
+            will be divided by this value.
         """
 
         self.list_IDs = eventnumbers
@@ -40,6 +44,7 @@ class PD2dataset(data.Dataset):
             if labels not in PD2_LABEL_COLUMNS:
                 raise ValueError(f'{labels} not in PD2_LABEL_COLUMNS')
         self.labels = labels
+        self.scaledata = scaledata
 
     def __len__(self):
         """Length of the datapoints in the dataset"""
@@ -55,9 +60,11 @@ class PD2dataset(data.Dataset):
         # Select sample
         ID = self.list_IDs[index]
         # Load data and get label
-        X = vae.get_traces(ID)
+        X = io.get_traces(ID)
+        if self.scaledata is not None:
+            X /= self.scaledata
         if isinstance(self.labels, str):
-            labels = vae.get_labels(ID)
+            labels = io.get_labels(ID)
             y = labels[self.labels].values
         else:
             y = self.labels[index]
