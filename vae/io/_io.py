@@ -23,7 +23,7 @@ __all__ = ["get_labels", "get_traces", "load_partition"]
 
 def get_labels(eventnumber,  
                ev_mapping=None,
-               map_path='/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/file_mapping.h5',
+               map_path='/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/Run44_v3/file_mapping.h5',
               ):
     """
     Function to load known labels based on given event numbers. 
@@ -74,8 +74,8 @@ def get_labels(eventnumber,
 
 def get_traces(eventnumber,  
                ev_mapping=None,
-               map_path='/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/file_mapping.h5', 
-               tracelength=3084,
+               map_path='/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/Run44_v3/file_mapping.h5', 
+               tracelength=925,
               ):
     """
     Function to load traces based on given event numbers. 

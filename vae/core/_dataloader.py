@@ -1,8 +1,11 @@
 import torch
 from torch.utils import data
+import numpy as np
+import pandas as pd
 import vae
 from vae import PD2_LABEL_COLUMNS
 from vae import io
+
 
 __all__ = ["PD2dataset"]
 
@@ -12,7 +15,9 @@ class PD2dataset(data.Dataset):
     PyTorch. This class serves as a generator for the 
     vae.get_traces() function. 
     """
-    def __init__(self, eventnumbers, labels=None, scaledata=None):
+    def __init__(self, eventnumbers, labels=None, scaledata=None, 
+                 map_path='/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/Run44_v3/file_mapping.h5',
+                tracelength=925):
         """
         Initialization of data object. eventnumbers
         are stored and will be iterated over and passed
@@ -35,6 +40,11 @@ class PD2dataset(data.Dataset):
         scaledata : float, NoneType, optional
             If a value is given, then all the data
             will be divided by this value.
+        map_path : str, optional
+            Absolute path to eventnumber-file mapping
+        tracelength : int, optional
+            The length of the traces being loaded. This is nessesary
+            to determine the initial array size for the returned traces
         """
 
         self.list_IDs = eventnumbers
@@ -45,6 +55,8 @@ class PD2dataset(data.Dataset):
                 raise ValueError(f'{labels} not in PD2_LABEL_COLUMNS')
         self.labels = labels
         self.scaledata = scaledata
+        self.map = pd.read_hdf(map_path,'map')
+        self.tracelength = tracelength
 
     def __len__(self):
         """Length of the datapoints in the dataset"""
@@ -60,12 +72,12 @@ class PD2dataset(data.Dataset):
         # Select sample
         ID = self.list_IDs[index]
         # Load data and get label
-        X = io.get_traces(ID)
+        X = io.get_traces(ID, ev_mapping=self.map, tracelength=self.tracelength)
         if self.scaledata is not None:
             X /= self.scaledata
         if isinstance(self.labels, str):
-            labels = io.get_labels(ID)
-            y = labels[self.labels].values
+            labels = io.get_labels(ID, ev_mapping=self.map)
+            y = labels[self.labels].values.astype(float)
         else:
             y = self.labels[index]
         return X, y
