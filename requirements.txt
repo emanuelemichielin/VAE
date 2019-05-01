@@ -5,3 +5,5 @@ matplotlib>=3.0.2
 numpy>=1.14.3
 keras>=2.2.4
 qetpy>=1.1.0
+torchsummary>=1.5.1
+torch>=1.0.0
