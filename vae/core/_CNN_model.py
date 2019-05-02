@@ -22,14 +22,16 @@ from torchsummary import summary
 __all__ = ["CNN_VAE"]
 
 class Encoder(nn.Module):
+    """
+    Encoder class for variation autoencoder 
+    """
     def __init__(self, z_dim):
         super(Encoder, self).__init__()
-        self.conv1 = nn.Conv1d(1, 16, 8, 2, padding=4)
-        self.conv2 = nn.Conv1d(16, 16, 8, 2, padding=4)
-        self.conv3 = nn.Conv1d(16, 32, 8, 2, padding=3)
-        self.conv4 = nn.Conv1d(32, 32, 8, 2, padding=3)
-        #self.fc1 = nn.Linear(32*21, 64)
-        self.fc1 = nn.Linear(32*58, 64)
+        self.conv1 = nn.Conv1d(1, 16, 8, 2, padding=1)
+        self.conv2 = nn.Conv1d(16, 16, 8, 2, padding=0)
+        self.conv3 = nn.Conv1d(16, 32, 8, 2, padding=0)
+        self.conv4 = nn.Conv1d(32, 32, 8, 2, padding=0)
+        self.fc1 = nn.Linear(32*96, 64)
         self.fc2 = nn.Linear(64, 16)
         self.fc21 = nn.Linear(16, z_dim)
         self.fc22 = nn.Linear(16, z_dim)
@@ -43,6 +45,7 @@ class Encoder(nn.Module):
 
     def forward(self, x):
         x = self.relu(self.conv1(x))
+        
         x = self.bn1(x)
         x = F.dropout(x, 0.3)
         x = self.relu(self.conv2(x))
@@ -54,9 +57,8 @@ class Encoder(nn.Module):
         x = self.relu(self.conv4(x))
         x = self.bn4(x)
         x = F.dropout(x, 0.3)
-        #print(x.size())
-        #x = x.view(-1, 672)
-        x = x.view(-1, 32*58)
+
+        x = x.view(-1, 32*96)
         
         x = self.relu(self.fc1(x))
         x = self.bn5(x)
@@ -69,15 +71,17 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
+    """
+    Decoder class for variational autoencoder
+    """
     def __init__(self, z_dim):
         super(Decoder, self).__init__()
-        #self.fc1 = nn.Linear(z_dim, 672)
-        self.fc1 = nn.Linear(z_dim, 32*58)
-        self.conv1 = nn.ConvTranspose1d(32, 32, 8, 2, padding=3)
-        self.conv2 = nn.ConvTranspose1d(32, 32, 8, 2, padding=3)
-        self.conv3 = nn.ConvTranspose1d(32, 16, 8, 2, padding=4)
-        self.conv4 = nn.ConvTranspose1d(16, 16, 8, 2, padding=3)
-        self.conv5 = nn.ConvTranspose1d(16, 1, 7, 1, padding=3)
+        self.fc1 = nn.Linear(z_dim, 32*96)
+        self.conv1 = nn.ConvTranspose1d(32, 32, 8, 2, padding=0)
+        self.conv2 = nn.ConvTranspose1d(32, 32, 8, 2, padding=0)
+        self.conv3 = nn.ConvTranspose1d(32, 16, 8, 2, padding=0)
+        self.conv4 = nn.ConvTranspose1d(16, 16, 8, 2, padding=0)
+        self.conv5 = nn.ConvTranspose1d(16, 1, 7, 1, padding=4)
         self.bn1 = nn.BatchNorm1d(32)
         self.bn2 = nn.BatchNorm1d(32)
         self.bn3 = nn.BatchNorm1d(16)
@@ -87,8 +91,7 @@ class Decoder(nn.Module):
     def forward(self, z):
         z = self.relu(self.fc1(z))
         #z = F.dropout(z, 0.3)
-        #z = z.view(-1, 32, 21)
-        z = z.view(-1, 32, 58)
+        z = z.view(-1, 32, 96)
         z = self.relu(self.conv1(z))
         z = self.bn1(z)
         #z = F.dropout(z, 0.3)
@@ -106,9 +109,15 @@ class Decoder(nn.Module):
         return recon
 
 
-class CNN_VAE(nn.Module):
+class VAE(nn.Module):
+    """
+    Variational autoencoder class composed of 1d convolution
+    layers 4 and 1 fully connected layer. Note, at the moment, 
+    this expects an input dimention of 1624. 
+    """
+    
     def __init__(self, z_dim=2):
-        super(CNN_VAE, self).__init__()
+        super(VAE, self).__init__()
         self.encoder = Encoder(z_dim)
         self.decoder = Decoder(z_dim)
         self.cuda()
@@ -119,3 +128,11 @@ class CNN_VAE(nn.Module):
         epsilon = torch.randn(*z_loc.size()).to(device)
         z = z_loc + std * epsilon
         return z
+    
+    def forward(self, x):
+        z_loc, z_scale = self.encoder(x)
+        z = self.reparameterize(z_loc, z_scale)
+        recon = self.decoder(z)
+        return recon, z_loc, z_scale
+    
+    
