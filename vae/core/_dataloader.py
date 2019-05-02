@@ -19,7 +19,9 @@ class PD2dataset(data.Dataset):
                  eventnumbers, 
                  labels=None, 
                  scaledata=None, 
-                 normed=False,
+                 max_normed=False,
+                 baseline_sub=False,
+                 offset=None,
                  map_path='/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/Run44_v3/file_mapping.h5',
                  tracelength=925):
         """
@@ -46,10 +48,14 @@ class PD2dataset(data.Dataset):
         scaledata : float, NoneType, optional
             If a value is given, then all the data
             will be divided by this value.
-        normed : Bool, optional
+        max_normed : Bool, optional
             If True, each trace is scaled such that the baseline
             is cenetered at zero and the maximum is set to one. 
-            Note, normed takes priority over scaledata.
+        baseline_sub : Bool, optional
+            Baseline of every trace is subtracted.
+        offset : float, NoneType, optional
+            Offset to be added to each trace. This is 
+            done after all other processing steps.
         map_path : str, optional
             Absolute path to eventnumber-file mapping.
         tracelength : int, optional
@@ -66,7 +72,9 @@ class PD2dataset(data.Dataset):
                     raise ValueError(f'{labels} not in PD2_LABEL_COLUMNS')
         self.labels = labels
         self.scaledata = scaledata
-        self.normed = normed
+        self.max_normed = max_normed
+        self.baseline_sub = baseline_sub
+        self.offset = offset
         self.map = pd.read_hdf(map_path,'map')
         self.tracelength = tracelength
 
@@ -85,12 +93,18 @@ class PD2dataset(data.Dataset):
         ID = self.list_IDs[index]
         # Load data and get label
         X = io.get_traces(ID, ev_mapping=self.map, tracelength=self.tracelength)[...,:-1]
-        if self.normed:
-            X = X - np.mean(X[..., 700:], axis=-1)
+        
+        if self.max_normed:
+            X = X - np.mean(X[..., self.tracelength-200:], axis=-1)
             X = X / np.amin(X, axis=-1, keepdims=True)
-        elif self.scaledata is not None:
+        elif self.baseline_sub:
+            X = X - np.mean(X[..., self.tracelength-200:], axis=-1)
+        if self.scaledata is not None:
             X /= self.scaledata
+        if self.offset is not None:
+            X += self.offset
         X = X.astype(np.float32)
+        X = X[:,0,:]
         if isinstance(self.labels, str):
             labels = io.get_labels(ID, ev_mapping=self.map)
             if self.labels == 'full':
