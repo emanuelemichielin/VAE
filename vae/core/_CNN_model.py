@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from torchsummary import summary
 
 
-__all__ = ["CNN_VAE"]
+__all__ = ["VAE"]
 
 class Encoder(nn.Module):
     """
@@ -120,12 +120,13 @@ class VAE(nn.Module):
         super(VAE, self).__init__()
         self.encoder = Encoder(z_dim)
         self.decoder = Decoder(z_dim)
+        self.device = torch.device("cuda:0")
         self.cuda()
         self.z_dim = z_dim
 
     def reparameterize(self, z_loc, z_scale):
         std = z_scale.mul(0.5).exp_()
-        epsilon = torch.randn(*z_loc.size()).to(device)
+        epsilon = torch.randn(*z_loc.size()).to(self.device)
         z = z_loc + std * epsilon
         return z
     

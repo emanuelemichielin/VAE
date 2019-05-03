@@ -24,7 +24,10 @@ class Trainer(object):
                  nepochs, 
                  optimizer_type='Adam',
                  lr=1e-3,
-                 optim_kwargs={}
+                 optim_kwargs={},
+                 savemodel=False,
+                 savename='',
+                 ncheckpoints=1,
                 ):
         """
         Initilization of Trainer object. 
@@ -70,6 +73,14 @@ class Trainer(object):
         self.device = device
         
         self._step_size = len(train_dl)//10
+        self.savemodel=savemodel
+        self.savename=savename
+        if ncheckpoints is 1:
+            self.ncheckpoints=[self.nepochs]
+        elif ncheckpoints is 'all':
+            self.ncheckpoints=np.arange(self.nepochs)
+        else:
+            self.ncheckpoints = ncheckpoints
         
         
     def train(self, verbose=False, calc_test_loss=False):
@@ -112,6 +123,13 @@ class Trainer(object):
                       epoch, train_loss / len(self.train_dl.dataset)))
             if calc_test_loss:
                 self.testing_loss.append(self.test(verbose=verbose))
+            if self.savemodel:
+                if epoch in self.ncheckpoints:
+                    state = {'epoch': epoch, 'state_dict': self.model.state_dict(),
+                             'optimizer': self.optimizer.state_dict(),
+                             'loss_train' : self.training_loss,
+                             'loss_val' : self.testing_loss}
+                    torch.save(state, f'{self.savename}_epoch{epoch}.pt')
                 
     def test(self, verbose=False):
         """
