@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 
-__all__ = ["plot_loss"]
+__all__ = ["plot_loss", "plot_recon"]
 
 def plot_loss(trainer=None, training_loss=None, test_loss=None, nper_epoch=None):
     """
@@ -72,11 +72,52 @@ def plot_loss(trainer=None, training_loss=None, test_loss=None, nper_epoch=None)
         
     return fig, ax
 
-def plot_recon(dataloader, model, nplots='batch'):
+def plot_recon(dataloader, model, nplots=10):
+    """
+    Function to plot original traces and the equivalent trace
+    reconstructed by the model. 
+    
+    Parameters
+    ----------
+    dataloader : torch.Dataloader object
+        The dataloader corresponding to the 
+        data you want to visualize
+    model : torch.nn.Model
+        VAE model to use for reconstruction
+    nplots : int, optional 
+        The number of traces to reconstruct
+        and plot. Each trace will be drawn in 
+        it's own figure. 
+    """
+    
+    if nplots > 20:
+        raise ValueError('Took many figures to open at once. Please call this function in a loop')
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda:0" if use_cuda else "cpu")
     with torch.no_grad():
-    for i, (x, _) in enumerate(test_loader):
+    x, y = dataloader.dataset.__getitem(nplots)
+    
+    X.to(device)
+    recon_batch, mu, logvar = model(x)
+    x = x.cpu().detach().numpy()
+    recon_batch = recon_batch.cpu().detach().numpy()
+    
+    for ii in range(nplots):
+        fig, ax = plt.subplots(figsize=(10,6))
+        ax.set_xlabel('Time [Arbitraty Units]')
+        ax.set_ylabel('Amplitude [Arbitrary Units]')
+        ax.grid(True, linestyle='--')
+        ax.tick_params(which = 'both', tickdir = 'in', top = True, 
+                       right = True)
+        ax.set_title('Original Trace vs Reconstructed Trace')
+
         x = x.to(device)
         recon_batch, mu, logvar = model(x)
         x = x.cpu().detach().numpy()
         recon_batch = recon_batch.cpu().detach().numpy()
-        break
+        for ii in range(10):
+    
+        ax.plot(x[ii, 0, 200:400], label='original')
+        ax.plot(recon[ii, 200:400], label='reconstructed')
+        ax.legend()
+        
