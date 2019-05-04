@@ -6,7 +6,7 @@ import torch
 
 __all__ = ["plot_loss", "plot_recon"]
 
-def plot_loss(trainer=None, training_loss=None, test_loss=None, nper_epoch=None):
+def plot_loss(trainer=None, training_loss=None, test_loss=None, nper_epoch=None, nepochs=None):
     """
     Function to plot the loss during training and testing of model. Must provide either
     the Trianer object, or the training_loss/test_loss explicitly.
@@ -27,6 +27,8 @@ def plot_loss(trainer=None, training_loss=None, test_loss=None, nper_epoch=None)
         to 1. 
     nper_epoch : int, optional
         The number of batches needed to finish an epoch. 
+    nepochs : int, optional
+        The number of epochs used for training.
         
     Returns
     -------
@@ -59,13 +61,13 @@ def plot_loss(trainer=None, training_loss=None, test_loss=None, nper_epoch=None)
     ax.tick_params(which = 'both', tickdir = 'in', top = True, 
                        right = True)
     ax.set_title('Loss vs Number of Training Steps')
-
-    for ep in range(1, num_epochs+1):
-        if ep == 1:
-            ax.axvline(ep*total_step, linestyle = ':', alpha = 0.1, color = 'g',
-                      label = 'Epoch')
-        else:
-            ax.axvline(ep*total_step, linestyle = ':', alpha = 0.1, color = 'g')
+    if nepochs is not None:
+        for ep in range(1, nepochs+1):
+            if ep == 1:
+                ax.axvline(ep*nper_epoch, linestyle = ':', alpha = 0.1, color = 'g',
+                          label = 'Epoch')
+            else:
+                ax.axvline(ep*nper_epoch, linestyle = ':', alpha = 0.1, color = 'g')
 
     ax.set_yscale('log')
     ax.legend()
@@ -90,18 +92,18 @@ def plot_recon(dataloader, model, nplots=10):
         it's own figure. 
     """
     
-    if nplots > 20:
+    if nplots > 16:
         raise ValueError('Took many figures to open at once. Please call this function in a loop')
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda:0" if use_cuda else "cpu")
+    
     with torch.no_grad():
-    x, y = dataloader.dataset.__getitem(nplots)
-    
-    X.to(device)
-    recon_batch, mu, logvar = model(x)
-    x = x.cpu().detach().numpy()
-    recon_batch = recon_batch.cpu().detach().numpy()
-    
+        for i, (x, _) in enumerate(dataloader):
+            x = x.to(device)
+            recon_batch, mu, logvar = model(x)
+            x = x.cpu().detach().numpy()
+            recon_batch = recon_batch.cpu().detach().numpy()
+            break
     for ii in range(nplots):
         fig, ax = plt.subplots(figsize=(10,6))
         ax.set_xlabel('Time [Arbitraty Units]')
@@ -109,15 +111,8 @@ def plot_recon(dataloader, model, nplots=10):
         ax.grid(True, linestyle='--')
         ax.tick_params(which = 'both', tickdir = 'in', top = True, 
                        right = True)
-        ax.set_title('Original Trace vs Reconstructed Trace')
-
-        x = x.to(device)
-        recon_batch, mu, logvar = model(x)
-        x = x.cpu().detach().numpy()
-        recon_batch = recon_batch.cpu().detach().numpy()
-        for ii in range(10):
+        ax.plot(x[ii, 0, ], label='original')
+        ax.plot(recon_batch[ii, 0, ], label='reconstructed')
+        plt.legend()
     
-        ax.plot(x[ii, 0, 200:400], label='original')
-        ax.plot(recon[ii, 200:400], label='reconstructed')
-        ax.legend()
-        
+  

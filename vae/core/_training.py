@@ -159,3 +159,5 @@ class Trainer(object):
             if verbose:
                 print('====> Test set loss: {:.4f}'.format(test_loss))
         return test_loss
+    
+    
