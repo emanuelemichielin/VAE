@@ -14,10 +14,12 @@ from ._utils import _load_preprocessed_traces
 from ._utils import _load_preprocessed_meta
 from ._utils import _load_labels_dump
 
+from vae import PD2_LABEL_COLUMNS
 
 
 
-__all__ = ["get_labels", "get_traces", "load_partition"]
+
+__all__ = ["get_labels", "get_traces", "load_partition", "get_latent_vars"]
 
 
 
@@ -164,7 +166,7 @@ def load_partition(basepath, file):
 
 
 
-def get_latent(dataloader, model, size='all'):
+def get_latent_vars(dataloader, model, label_rtn=False):
     """
     Function to calculate the latent variables from a trained model.
     
@@ -174,23 +176,37 @@ def get_latent(dataloader, model, size='all'):
         The dataloader for the dataset on interest
     model : torch.nn.Model
         The trained VAE model
-    size : int, str, optional
-        The number of datapoints to return. Defaults
-        to load all the data.
+    label_rtn : Bool, optional
+        If True, the labels are returned, defaults to 
+        False.
         
     Returns
     -------
     latent : array
         Array of laten variables of shape (#events, #latent Vars)
+    labels : array, optional
+        Array of ground truth values 
         
     """
     
-    arr = np.zeros((len(loader.dataset), model.z_dim))
-    bs = loader.batch_size
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda:0" if use_cuda else "cpu")
+    if dataloader.drop_last:
+        size = (len(dataloader)-1)*dataloader.batch_size
+    else:
+        size = len(dataloader.dataset)
+    latent = np.zeros((size, model.z_dim))
+    labels = np.zeros((size, len(PD2_LABEL_COLUMNS)))
+    bs = dataloader.batch_size
     model.eval()
     with torch.no_grad():
-        for ii, (xtest, _) in enumerate(loader):
+        for ii, (xtest, y) in enumerate(dataloader):
             xtest = xtest.to(device)
             recon_batch, mu, scale = model(xtest)
-            arr[ii*bs:(ii+1)*bs,:] = mu.cpu().numpy()
-    y_test = vae.io.get_labels(loader.dataset.list_IDs)
+            latent[ii*bs:(ii+1)*bs,:] = mu.cpu().numpy()
+            if label_rtn:
+                labels[ii*bs:(ii+1)*bs,:] = y[:,0,:].cpu().numpy()
+    if label_rtn:                  
+        return latent, labels
+    else:
+        latent

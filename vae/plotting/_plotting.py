@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 
-__all__ = ["plot_loss", "plot_recon"]
+__all__ = ["plot_loss", "plot_recon", "plot_latent_2d"]
 
 def plot_loss(trainer=None, training_loss=None, test_loss=None, nper_epoch=None, nepochs=None):
     """
@@ -128,4 +128,60 @@ def plot_recon(dataloader, model, nplots=10, xlims=None, ylims=None):
             ax.set_ylim(ylims)
             
     
-  
+def plot_latent_2d(latent_vars, labels=None, label_name=None, pltkwargs={}, 
+                   savefig=False, filename=None):
+    """
+    Function to plot latent variables as a scatter plot colored by
+    ground truths (optional). If the latent variables are not 2d, 
+    first reduce the dimentions using either tSNE, PCA, or random 
+    projections + other combo. 
+    
+    Parameters
+    ----------
+    latent_vars : array
+        Array of events expressed in latent space. 
+        Should be 2d. If more than 2 laten dims, reduce
+        the diminsion before call this function
+    labels : array, optional
+        Array corresponding to the ground truth values. 
+        If not specified, the data will not be colored.
+    label_name : str, optional
+        The name of value for the label (i.e. energy, optimum filter, etc)
+    pltkwargs : dict, optional
+        Optional key word arguments to be passed to 
+        matplotlib.pyplot.scatter()
+    savefig : Bool, optional
+        If True, the figure is saved
+    filename : str, optional
+        The abosolute path+name for the figure to be
+        saved.
+        
+        
+    Returns
+    -------
+    fig, ax : matplotlib figure and axes objects
+    """
+    
+    fig, ax = plt.subplots(figsize=(10,6))
+    ax.set_title('Latent Space Representation')
+    ax.set_xlabel('Z_1 [Arbitrary Units]')
+    ax.set_ylabel('Z_2 [Arbitrary Units]')
+    ax.grid(True, linestyle='--')
+    ax.tick_params(which = 'both', tickdir = 'in', top = True, 
+                   right = True)
+    if labels is None:
+        labels = 'b'
+    clr = ax.scatter(latent_vars[:, 0], latent_vars[:, 1], c=labels, **pltkwargs)
+    if label_name:
+        fig.colorbar(clr, label=label_name)
+        
+    
+ 
+    if savefig:
+        try:
+            fig.savefig(filename+'.png')
+        except:
+            raise ValueError('Must provide a valid filepath')
+    return fig, ax
+
+        
