@@ -175,8 +175,6 @@ def plot_latent_2d(latent_vars, labels=None, label_name=None, pltkwargs={},
     if label_name:
         fig.colorbar(clr, label=label_name)
         
-    
- 
     if savefig:
         try:
             fig.savefig(filename+'.png')

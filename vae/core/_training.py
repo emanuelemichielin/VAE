@@ -25,6 +25,7 @@ class Trainer(object):
                  optimizer_type='Adam',
                  lr=1e-3,
                  optim_kwargs={},
+                 loss_kwargs={},
                  savemodel=False,
                  savename='',
                  ncheckpoints=1,
@@ -42,7 +43,9 @@ class Trainer(object):
         test_dl : pytorch DataLoader object
             The dataloader for the test data
         loss_func : function
-            Loss function to use for VAE
+            Loss function to use for VAE. Note, the input to
+            the loss function must be of the form:
+            (recon_batch, x, mu, scale,)
         nepochs : int
             Number of epochs to train over
         optimizer_type : str, optional
@@ -51,7 +54,21 @@ class Trainer(object):
         lr : float, optional
             Learning rate for optimizer.
         optim_kwargs : dict, optional
-            
+            optional key word args for the
+            optimizer.
+        loss_kwargs : dict, optional
+            optional key word aregs for the
+            loss function.
+        savename : str, optional
+            Path + file name for model and
+            optimizer settings to be saved
+        ncheckpoints : int, str, array-like, optional
+            How many check points to save model at. 
+            If 1 (default), the model is only saved
+            at the end of training. If 'all', it is 
+            saved every epoch. If a list or array is passed,
+            it is saved for the corresponding indices. 
+        
         """
         
         use_cuda = torch.cuda.is_available()
@@ -67,6 +84,7 @@ class Trainer(object):
         self.test_dl = test_dl
         self.optimizer = optimizer
         self.loss_func = loss_func
+        self.loss_kwargs = loss_kwargs
         self.nepochs = nepochs
         self.training_loss = []
         self.testing_loss = []
@@ -107,7 +125,7 @@ class Trainer(object):
                 x = x.to(self.device)
                 self.optimizer.zero_grad()
                 recon_batch, mu, scale = self.model(x)
-                loss = self.loss_func(recon_batch, x, mu, scale)
+                loss = self.loss_func(recon_batch, x, mu, scale, **self.loss_kwargs)
                 loss.backward()
                 train_loss += loss.item()
                 self.training_loss.append(loss)
@@ -153,7 +171,8 @@ class Trainer(object):
             for ii, (x, _) in enumerate(self.test_dl):
                 x = x.to(self.device)
                 recon_batch, mu, scale = self.model(x)
-                test_loss += self.loss_func(recon_batch, x, mu, scale).item()
+                test_loss += self.loss_func(recon_batch, x, mu, 
+                                            scale, **self.loss_kwargs).item()
                 #test_loss_batch.append(test_loss)
             test_loss /= len(self.test_dl.dataset)
             if verbose:
