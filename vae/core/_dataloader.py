@@ -15,9 +15,15 @@ class PD2dataset(data.Dataset):
     PyTorch. This class serves as a generator for the 
     vae.get_traces() function. 
     """
-    def __init__(self, eventnumbers, labels=None, scaledata=None, 
+    def __init__(self, 
+                 eventnumbers, 
+                 labels=None, 
+                 scaledata=None, 
+                 max_normed=False,
+                 baseline_sub=False,
+                 offset=None,
                  map_path='/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/Run44_v3/file_mapping.h5',
-                tracelength=925):
+                 tracelength=925):
         """
         Initialization of data object. eventnumbers
         are stored and will be iterated over and passed
@@ -36,25 +42,39 @@ class PD2dataset(data.Dataset):
             Array of event numbers to use for training/testing
         labels : array, str, NoneType, optional
             Groud truth values correpsonding to each item in 
-            eventnumbers. 
+            eventnumbers. String must correspond to either a
+            label in the saved RQs, or 'full'. If 'full', all
+            the RQs will be returned.
         scaledata : float, NoneType, optional
             If a value is given, then all the data
             will be divided by this value.
+        max_normed : Bool, optional
+            If True, each trace is scaled such that the baseline
+            is cenetered at zero and the maximum is set to one. 
+        baseline_sub : Bool, optional
+            Baseline of every trace is subtracted.
+        offset : float, NoneType, optional
+            Offset to be added to each trace. This is 
+            done after all other processing steps.
         map_path : str, optional
-            Absolute path to eventnumber-file mapping
+            Absolute path to eventnumber-file mapping.
         tracelength : int, optional
             The length of the traces being loaded. This is nessesary
-            to determine the initial array size for the returned traces
+            to determine the initial array size for the returned traces.
         """
 
         self.list_IDs = eventnumbers
         if labels is None:
             labels = eventnumbers
         elif isinstance(labels, str):
-            if labels not in PD2_LABEL_COLUMNS:
-                raise ValueError(f'{labels} not in PD2_LABEL_COLUMNS')
+            if labels != 'full':
+                if labels not in PD2_LABEL_COLUMNS:
+                    raise ValueError(f'{labels} not in PD2_LABEL_COLUMNS')
         self.labels = labels
         self.scaledata = scaledata
+        self.max_normed = max_normed
+        self.baseline_sub = baseline_sub
+        self.offset = offset
         self.map = pd.read_hdf(map_path,'map')
         self.tracelength = tracelength
 
@@ -72,12 +92,25 @@ class PD2dataset(data.Dataset):
         # Select sample
         ID = self.list_IDs[index]
         # Load data and get label
-        X = io.get_traces(ID, ev_mapping=self.map, tracelength=self.tracelength)
+        X = io.get_traces(ID, ev_mapping=self.map, tracelength=self.tracelength)[...,:-1]
+        
+        if self.max_normed:
+            X = X - np.mean(X[..., self.tracelength-200:], axis=-1)
+            X = X / np.amin(X, axis=-1, keepdims=True)
+        elif self.baseline_sub:
+            X = X - np.mean(X[..., self.tracelength-200:], axis=-1)
         if self.scaledata is not None:
             X /= self.scaledata
+        if self.offset is not None:
+            X += self.offset
+        X = X.astype(np.float32)
+        X = X[:,0,:]
         if isinstance(self.labels, str):
             labels = io.get_labels(ID, ev_mapping=self.map)
-            y = labels[self.labels].values.astype(float)
+            if self.labels == 'full':
+                 y = labels.values.astype(float)
+            else:
+                y = labels[self.labels].values.astype(float)
         else:
             y = self.labels[index]
         return X, y

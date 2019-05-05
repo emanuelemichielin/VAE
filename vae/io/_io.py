@@ -7,16 +7,19 @@ import os
 from glob import glob
 import pickle as pkl
 from vae import PD2_LABEL_COLUMNS
+import torch
 
 from ._utils import _save_preprocessed
 from ._utils import _load_preprocessed_traces
 from ._utils import _load_preprocessed_meta
 from ._utils import _load_labels_dump
 
+from vae import PD2_LABEL_COLUMNS
 
 
 
-__all__ = ["get_labels", "get_traces", "load_partition"]
+
+__all__ = ["get_labels", "get_traces", "load_partition", "get_latent_vars"]
 
 
 
@@ -163,4 +166,47 @@ def load_partition(basepath, file):
 
 
 
-
+def get_latent_vars(dataloader, model, label_rtn=False):
+    """
+    Function to calculate the latent variables from a trained model.
+    
+    Parameters
+    ----------
+    dataloader : pytorch dataloader object
+        The dataloader for the dataset on interest
+    model : torch.nn.Model
+        The trained VAE model
+    label_rtn : Bool, optional
+        If True, the labels are returned, defaults to 
+        False.
+        
+    Returns
+    -------
+    latent : array
+        Array of laten variables of shape (#events, #latent Vars)
+    labels : array, optional
+        Array of ground truth values 
+        
+    """
+    
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda:0" if use_cuda else "cpu")
+    if dataloader.drop_last:
+        size = (len(dataloader)-1)*dataloader.batch_size
+    else:
+        size = len(dataloader.dataset)
+    latent = np.zeros((size, model.z_dim))
+    labels = np.zeros((size, len(PD2_LABEL_COLUMNS)))
+    bs = dataloader.batch_size
+    model.eval()
+    with torch.no_grad():
+        for ii, (xtest, y) in enumerate(dataloader):
+            xtest = xtest.to(device)
+            recon_batch, mu, scale = model(xtest)
+            latent[ii*bs:(ii+1)*bs,:] = mu.cpu().numpy()
+            if label_rtn:
+                labels[ii*bs:(ii+1)*bs,:] = y[:,0,:].cpu().numpy()
+    if label_rtn:                  
+        return latent, labels
+    else:
+        latent
