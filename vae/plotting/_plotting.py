@@ -74,7 +74,7 @@ def plot_loss(trainer=None, training_loss=None, test_loss=None, nper_epoch=None,
         
     return fig, ax
 
-def plot_recon(dataloader, model, nplots=10):
+def plot_recon(dataloader, model, nplots=10, xlims=None, ylims=None):
     """
     Function to plot original traces and the equivalent trace
     reconstructed by the model. 
@@ -90,12 +90,20 @@ def plot_recon(dataloader, model, nplots=10):
         The number of traces to reconstruct
         and plot. Each trace will be drawn in 
         it's own figure. 
+    xlims : tuple, NoneType, optional
+        The xlims for the figures. If None (default), 
+        the limits will be determined by matplotlib
+    ylims : tuple, NoneType, optional
+        The ylims for the figures. If None (default), 
+        the limits will be determined by matplotlib
     """
     
     if nplots > 16:
         raise ValueError('Took many figures to open at once. Please call this function in a loop')
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda:0" if use_cuda else "cpu")
+    
+    model.eval()
     
     with torch.no_grad():
         for i, (x, _) in enumerate(dataloader):
@@ -113,6 +121,11 @@ def plot_recon(dataloader, model, nplots=10):
                        right = True)
         ax.plot(x[ii, 0, ], label='original')
         ax.plot(recon_batch[ii, 0, ], label='reconstructed')
-        plt.legend()
+        ax.legend()
+        if xlims is not None:
+            ax.set_xlim(xlims)
+        if ylims is not None:
+            ax.set_ylim(ylims)
+            
     
   

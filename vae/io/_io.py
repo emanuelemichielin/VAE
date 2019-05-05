@@ -7,6 +7,7 @@ import os
 from glob import glob
 import pickle as pkl
 from vae import PD2_LABEL_COLUMNS
+import torch
 
 from ._utils import _save_preprocessed
 from ._utils import _load_preprocessed_traces
@@ -163,4 +164,33 @@ def load_partition(basepath, file):
 
 
 
-
+def get_latent(dataloader, model, size='all'):
+    """
+    Function to calculate the latent variables from a trained model.
+    
+    Parameters
+    ----------
+    dataloader : pytorch dataloader object
+        The dataloader for the dataset on interest
+    model : torch.nn.Model
+        The trained VAE model
+    size : int, str, optional
+        The number of datapoints to return. Defaults
+        to load all the data.
+        
+    Returns
+    -------
+    latent : array
+        Array of laten variables of shape (#events, #latent Vars)
+        
+    """
+    
+    arr = np.zeros((len(loader.dataset), model.z_dim))
+    bs = loader.batch_size
+    model.eval()
+    with torch.no_grad():
+        for ii, (xtest, _) in enumerate(loader):
+            xtest = xtest.to(device)
+            recon_batch, mu, scale = model(xtest)
+            arr[ii*bs:(ii+1)*bs,:] = mu.cpu().numpy()
+    y_test = vae.io.get_labels(loader.dataset.list_IDs)
