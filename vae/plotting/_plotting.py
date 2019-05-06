@@ -1,12 +1,15 @@
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
+from matplotlib import colors
 import numpy as np
 import torch
 
 
 __all__ = ["plot_loss", "plot_recon", "plot_latent_2d"]
 
-def plot_loss(trainer=None, training_loss=None, test_loss=None, nper_epoch=None, nepochs=None):
+def plot_loss(trainer=None, training_loss=None, 
+              test_loss=None, nper_epoch=None, 
+              nepochs=None, savefig=False, filename=None):
     """
     Function to plot the loss during training and testing of model. Must provide either
     the Trianer object, or the training_loss/test_loss explicitly.
@@ -29,6 +32,11 @@ def plot_loss(trainer=None, training_loss=None, test_loss=None, nper_epoch=None,
         The number of batches needed to finish an epoch. 
     nepochs : int, optional
         The number of epochs used for training.
+    savefig : Bool, optional
+        If True, the figure is saved
+    filename : str, optional
+        The abosolute path+name for the figure to be
+        saved.
         
     Returns
     -------
@@ -71,10 +79,17 @@ def plot_loss(trainer=None, training_loss=None, test_loss=None, nper_epoch=None,
 
     ax.set_yscale('log')
     ax.legend()
+    if savefig:
+        try:
+            fig.savefig(filename+'.png', dpi=300)
+        except:
+            raise ValueError('Must provide a valid filepath')
+    return fig, ax
         
     return fig, ax
 
-def plot_recon(dataloader, model, nplots=10, xlims=None, ylims=None):
+def plot_recon(dataloader, model, nplots=10, xlims=None, ylims=None,
+              savefig=False, filename=None):
     """
     Function to plot original traces and the equivalent trace
     reconstructed by the model. 
@@ -96,6 +111,11 @@ def plot_recon(dataloader, model, nplots=10, xlims=None, ylims=None):
     ylims : tuple, NoneType, optional
         The ylims for the figures. If None (default), 
         the limits will be determined by matplotlib
+    savefig : Bool, optional
+        If True, the figure is saved
+    filename : str, optional
+        The abosolute path+name for the figure to be
+        saved.
     """
     
     if nplots > 16:
@@ -128,6 +148,12 @@ def plot_recon(dataloader, model, nplots=10, xlims=None, ylims=None):
             ax.set_xlim(xlims)
         if ylims is not None:
             ax.set_ylim(ylims)
+        if savefig:
+            try:
+                fig.savefig(f'{filename}{ii}.png', dpi=300)
+            except:
+                raise ValueError('Must provide a valid filepath')
+    return fig, ax    
     dataloader.num_workers = nworkers
             
     
@@ -180,7 +206,7 @@ def plot_latent_2d(latent_vars, labels=None, label_name=None, pltkwargs={},
         
     if savefig:
         try:
-            fig.savefig(filename+'.png')
+            fig.savefig(filename+'.png', dpi=300)
         except:
             raise ValueError('Must provide a valid filepath')
     return fig, ax
