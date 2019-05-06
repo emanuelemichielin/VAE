@@ -104,6 +104,8 @@ def plot_recon(dataloader, model, nplots=10, xlims=None, ylims=None):
     device = torch.device("cuda:0" if use_cuda else "cpu")
     
     model.eval()
+    nworkers = dataloader.num_workers
+    dataloader.num_workers = 1
     
     with torch.no_grad():
         for i, (x, _) in enumerate(dataloader):
@@ -126,6 +128,7 @@ def plot_recon(dataloader, model, nplots=10, xlims=None, ylims=None):
             ax.set_xlim(xlims)
         if ylims is not None:
             ax.set_ylim(ylims)
+    dataloader.num_workers = nworkers
             
     
 def plot_latent_2d(latent_vars, labels=None, label_name=None, pltkwargs={}, 
