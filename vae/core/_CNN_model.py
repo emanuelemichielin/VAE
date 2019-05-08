@@ -2,20 +2,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-#import torch.optim as optim
-#from torch.utils.data import TensorDataset
-#from torch.utils.data import DataLoader
-#from torch.nn import init
-# import argparse
-# import os
-# from sklearn.model_selection import train_test_split
-# import glob
-# from matplotlib import pyplot as plt
-# from sklearn.model_selection import train_test_split
-# from sklearn.manifold import TSNE
-# from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.preprocessing import OneHotEncoder
-# from sklearn.utils import shuffle
 from torchsummary import summary
 
 
@@ -45,7 +31,6 @@ class Encoder(nn.Module):
 
     def forward(self, x):
         x = self.relu(self.conv1(x))
-        
         x = self.bn1(x)
         x = F.dropout(x, 0.3)
         x = self.relu(self.conv2(x))
@@ -57,9 +42,7 @@ class Encoder(nn.Module):
         x = self.relu(self.conv4(x))
         x = self.bn4(x)
         x = F.dropout(x, 0.3)
-
         x = x.view(-1, 32*96)
-        
         x = self.relu(self.fc1(x))
         x = self.bn5(x)
         x = F.dropout(x, 0.5)
