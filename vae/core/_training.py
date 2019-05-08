@@ -147,7 +147,7 @@ class Trainer(object):
                              'optimizer': self.optimizer.state_dict(),
                              'loss_train' : self.training_loss,
                              'loss_val' : self.testing_loss}
-                    torch.save(state, f'{self.savename}_epoch{epoch}.pt')
+                    torch.save(state, f'{self.savename}_epoch{str(epoch).zfill(4)}.pt')
                 
     def test(self, verbose=False):
         """
