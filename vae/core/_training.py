@@ -1,12 +1,12 @@
-
 import numpy as np
 import pandas as pd
 import torch
 from torch.utils import data
 from torch import nn, optim
 from torch.nn import functional as F
+import vae
 
-__all__ = ["Trainer"]
+__all__ = ["Trainer", "load_checkpoint"]
 
 
 
@@ -22,6 +22,7 @@ class Trainer(object):
                  test_dl, 
                  loss_func, 
                  nepochs, 
+                 starting_epoch=0,
                  optimizer_type='Adam',
                  lr=1e-3,
                  optim_kwargs={},
@@ -48,6 +49,8 @@ class Trainer(object):
             (recon_batch, x, mu, scale,)
         nepochs : int
             Number of epochs to train over
+        starting_epoch : int, 
+            What epcoh the training should start on
         optimizer_type : str, optional
             Type of optimizer to use, must correspond
             to an available algorithm from torch.optim
@@ -86,6 +89,7 @@ class Trainer(object):
         self.loss_func = loss_func
         self.loss_kwargs = loss_kwargs
         self.nepochs = nepochs
+        self.starting_epoch =  starting_epoch
         self.training_loss = []
         self.testing_loss = []
         self.device = device
@@ -114,11 +118,9 @@ class Trainer(object):
             for the testing data every epoch. Defaults
             to False (i.e. only the loss for training
             data is calculated)
-        """
-        loss_train_list = []
+        """        
         
-        
-        for epoch in range(self.nepochs):
+        for epoch in range(self.starting_epoch, self.nepochs):
             train_loss = 0
             self.model.train()
             for batch_idx, (x, _) in enumerate(self.train_dl):
@@ -166,17 +168,127 @@ class Trainer(object):
         """
         self.model.eval()
         test_loss = 0
-        #test_loss_batch = []
+
         with torch.no_grad():
             for ii, (x, _) in enumerate(self.test_dl):
                 x = x.to(self.device)
                 recon_batch, mu, scale = self.model(x)
                 test_loss += self.loss_func(recon_batch, x, mu, 
                                             scale, **self.loss_kwargs).item()
-                #test_loss_batch.append(test_loss)
             test_loss /= len(self.test_dl.dataset)
             if verbose:
                 print('====> Test set loss: {:.4f}'.format(test_loss))
         return test_loss
     
     
+def load_checkpoint(path,  
+                    z_dims,  
+                    train_dl, 
+                    test_dl, 
+                    loss_func, 
+                    nepochs, 
+                    optimizer_type='Adam',
+                    lr=1e-3,
+                    optim_kwargs={},
+                    loss_kwargs={},
+                    savemodel=False,
+                    savename='',
+                    ncheckpoints=1):
+    """
+    Function to load a previously saved model for continued training. 
+    This function initalizes and returns a Trainer object. Note, the
+    saved checkpoint is assumed to have saved the state_dict for both
+    the model, AND the optimizer. Also the lists for the training and 
+    testing loss. The settings must be saved in a dictionary with keys:
+    
+    dict_keys(['epoch', 'state_dict', 'optimizer', 'loss_train', 'loss_val'])
+    where 'sate_dict' is the model state dict
+          'optimizer' is the optimizer state dict
+    
+    Parameters
+    ----------
+    path : str,
+        Absolute path to checkpoint to load
+    z_dims : int
+        The number of latend dimensions in the saved 
+        model checkpoint
+    train_dl : pytorch DataLoader object
+        The dataloader for the training data
+    test_dl : pytorch DataLoader object
+        The dataloader for the test data
+    loss_func : function
+        Loss function to use for VAE. Note, the input to
+        the loss function must be of the form:
+        (recon_batch, x, mu, scale,)
+    nepochs : int
+        Number of epochs to train over
+    starting_epoch : int, 
+         What epcoh the training should start on
+    optimizer_type : str, optional
+        Type of optimizer to use, must correspond
+        to an available algorithm from torch.optim
+    lr : float, optional
+        Learning rate for optimizer.
+    optim_kwargs : dict, optional
+        optional key word args for the
+        optimizer.
+    loss_kwargs : dict, optional
+        optional key word aregs for the
+        loss function.
+    savename : str, optional
+        Path + file name for model and
+        optimizer settings to be saved
+    ncheckpoints : int, str, array-like, optional
+        How many check points to save model at. 
+        If 1 (default), the model is only saved
+        at the end of training. If 'all', it is 
+        saved every epoch. If a list or array is passed,
+        it is saved for the corresponding indices. 
+    
+    Returns
+    -------
+    trainer : vae.core.Trainer 
+        Trainer object to continue training
+        from saved checkpoint.
+    """
+
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda:0" if use_cuda else "cpu")
+    
+    model = vae.VAE(z_dims).to(device)
+    try:
+        checkpoint = torch.load(path)
+    except:
+        raise FileNotFoundError('Unable to load file.')
+        
+    try:
+        optimizer = eval(f'optim.{optimizer_type}(model.parameters())')
+    except:
+        raise ValueError('Invalid optimizer type or kwargs')
+    
+    model.load_state_dict(checkpoint['state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer'])
+    epoch = checkpoint['epoch']
+    training_loss = checkpoint['loss_train']
+    testing_loss = checkpoint['loss_val']
+    
+    trainer = Trainer(model=model, 
+                      train_dl=train_dl, 
+                      test_dl=test_dl, 
+                      loss_func=loss_func, 
+                      nepochs=nepochs, 
+                      starting_epoch=epoch,
+                      optimizer_type=optimizer_type,
+                      lr=lr,
+                      optim_kwargs=optim_kwargs,
+                      loss_kwargs=loss_kwargs,
+                      savemodel=savemodel,
+                      savename=savename,
+                      ncheckpoints=ncheckpoints)
+    
+    trainer.optimizer = optimizer
+    trainer.training_loss = training_loss
+    trainer.testing_loss = testing_loss
+    
+    return trainer
+     
