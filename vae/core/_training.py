@@ -93,8 +93,10 @@ class Trainer(object):
         self.training_loss = []
         self.testing_loss = []
         self.device = device
-        
-        self._step_size = len(train_dl)//10
+        stepsize = len(train_dl)//10
+        if stepsize == 0:
+            stepsize = len(train_dl)
+        self._step_size = stepsize
         self.savemodel=savemodel
         self.savename=savename
         if ncheckpoints is 1:
@@ -269,7 +271,7 @@ def load_checkpoint(path,
     model.load_state_dict(checkpoint['state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer'])
     model.to(device)
-    optimizer.to(device)
+    #optimizer.to(device)
     epoch = checkpoint['epoch']
     training_loss = checkpoint['loss_train']
     testing_loss = checkpoint['loss_val']
