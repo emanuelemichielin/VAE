@@ -50,7 +50,7 @@ import os
 
 
 ### load data partition
-partition = vae.io.load_partition(PARTITION_PATH, 'good_triggers_flat')
+partition = vae.io.load_partition(PARTITION_PATH, 'good_triggers_cal')
 
 ### Define params
 use_cuda = torch.cuda.is_available()
@@ -58,29 +58,46 @@ device = torch.device("cuda:0" if use_cuda else "cpu")
 params = {'batch_size': 64,
           'shuffle': True,
           'num_workers': 20, 
-          'pin_memory' : False,
+          'pin_memory' : True,
           'drop_last' : False}
 
 # model_path = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/models/v6_8_flat_beta50/'
 # model_path = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/models/v6_8_flat_beta100/'
-model_path = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/models/v6_8_flat_beta5/'
+# model_path = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/models/v6_8_flat_beta5/'
+# model_path = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/models/v6_8_flat_beta1e-2/'
+# model_path = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/models/bagged_data/6_dims_beta1/'
+# model_path = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/models/bagged_data/20_dims_beta1/'
+model_path = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/models/good_triggers_cal/15_dims_beta1/'
 
 file_mapping = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/Run44_v6/file_mapping.h5'
 tracelength = 1625
-epochs = 100
+epochs = 250
 
-scale_factor = 4.e-6
-offset = 0.2
+scale_factor = 2.5e-6
+offset = 0.25
 learning_rate = 1e-4
-z_hidden = 8
+z_hidden = 15
 # beta = 50
 # beta = 100
-beta = 5
+beta = 1
+saverate = 4
+
+
+
 
 # make dirs for model to save
 isdir = os.path.isdir(model_path)
 if not isdir:
     os.makedirs(model_path)
+    
+# Save settings    
+settings = {'scale_factor' : scale_factor, 'offset' : offset, 'learning_rate' : learning_rate,
+           'z_hidden' : z_hidden, 'beta' : beta, 'tracelength' : tracelength}
+
+with open(model_path+'settings.pkl', 'wb') as setfile:
+    pkl.dump(settings, setfile)
+
+saveinds = np.arange(1, epochs, saverate)
 
 
 ### Generators
@@ -95,7 +112,7 @@ training_set = vae.PD2dataset(partition['train'],
 train_loader = data.DataLoader(training_set, **params)
 
 test_set = vae.PD2dataset(partition['validation'], 
-                          labels='full', 
+                          labels=None, 
                           map_path=file_mapping,
                           max_normed=False, 
                           baseline_sub=True, 
@@ -125,7 +142,7 @@ trainer = vae.Trainer(model=model,
                       savemodel=True,
                       savename=f'{model_path}model',
                       ncheckpoints='all')
-trainer.train(verbose=True, calc_test_loss=False)
+trainer.train(verbose=True, calc_test_loss=True)
 
 
 
