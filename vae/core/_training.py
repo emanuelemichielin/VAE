@@ -268,6 +268,8 @@ def load_checkpoint(path,
     
     model.load_state_dict(checkpoint['state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer'])
+    model.to(device)
+    optimizer.to(device)
     epoch = checkpoint['epoch']
     training_loss = checkpoint['loss_train']
     testing_loss = checkpoint['loss_val']
