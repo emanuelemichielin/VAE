@@ -1,3 +1,12 @@
+###############################################################
+# Author : Caleb Fink
+# 5/9/19
+#
+# This file contains plotting functions functions for plotting
+# the loss, reconstructed events, and latent space representations
+# These are all avilable from the base import
+###############################################################
+
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from matplotlib import colors

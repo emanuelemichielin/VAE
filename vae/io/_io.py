@@ -1,3 +1,12 @@
+###############################################################
+# Author : Caleb Fink
+# 5/9/19
+#
+# This file contains io functions for loading 
+# events and labels based on user specified events. These are 
+# available through vae.io. 
+###############################################################
+
 import numpy as np
 import pandas as pd
 import qetpy as qp

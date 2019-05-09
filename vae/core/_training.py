@@ -1,3 +1,12 @@
+###############################################################
+# Author : Caleb Fink
+# 5/9/19
+#
+# This file contains a Training object and checkpoint loader
+# for training the CNN based VAE. Both are able to be
+# imported from the base level of the module. 
+###############################################################
+
 import numpy as np
 import pandas as pd
 import torch

@@ -1,3 +1,11 @@
+###############################################################
+# Author : Caleb Fink
+# 5/9/19
+#
+# This file contains the dataloader for the PD2 detector
+# imported from the base level of the module. 
+###############################################################
+
 import torch
 from torch.utils import data
 import numpy as np

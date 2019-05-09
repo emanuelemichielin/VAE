@@ -1,3 +1,12 @@
+###############################################################
+# Author : Caleb Fink
+# 5/9/19
+#
+# This file contains processing functions for pre-processing
+# data. Note, this is mostly inteded to be run in parallel
+# on a cluster
+###############################################################
+
 import numpy as np
 import rqpy as rp
 import qetpy as qp

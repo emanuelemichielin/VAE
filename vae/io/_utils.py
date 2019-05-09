@@ -1,3 +1,12 @@
+###############################################################
+# Author : Caleb Fink
+# 5/9/19
+#
+# This file contains helper io functions for loading 
+# dumps of events. These are meant to be hidden from
+# the user
+###############################################################
+
 import numpy as np
 import pandas as pd
 import qetpy as qp
