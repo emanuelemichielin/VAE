@@ -193,7 +193,6 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         
         self.convoutput = convoutput
-        print(f"chans={chans}")
         self.reshaper = (chans[0], convoutput)
         self.usedropout = usedropout
         
@@ -222,7 +221,6 @@ class Decoder(nn.Module):
         """
         z = F.relu(self.fc1(z))
         if self.usedropout: z = F.dropout(z, 0.3);
-        #z = z.view(-1, 32, 96)
         z = z.view(-1, *self.reshaper)
         z = F.relu(self.conv1(z))
         z = self.bn1(z)
@@ -321,7 +319,6 @@ class VAE(nn.Module):
         # the below works, but is not robust
         initial_dim = [chans[3]]
         initial_dim.extend(chans[:4][::-1])
-        print(initial_dim)
     
         self.decoder = Decoder(z_dim=z_dim, 
                                usedropout=usedropout_decode, 
