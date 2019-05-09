@@ -1,13 +1,18 @@
+###############################################################
+# Author : Caleb Fink
+# 5/9/19
+#
+# This file contains 3 differnet loss functions to be used with
+# VAE. All are able to be
+# imported from the base level of the module. 
+###############################################################
+
 import numpy as np
 import torch
 import torch.nn.functional as F
 
-__all__ = ["loss_function", "beta_mse_loss", "mse_loss", "cross_entropy_loss"]
+__all__ = ["beta_mse_loss", "mse_loss", "cross_entropy_loss"]
 
-def loss_function(recon_x, x, z_loc, z_scale):
-    BCE = F.mse_loss(recon_x, x, reduction='sum')*100
-    KLD = -0.5 * torch.sum(1 + z_scale - z_loc.pow(2) - z_scale.exp())
-    return BCE + KLD
 
 def mse_loss(recon_x, x, z_loc, z_scale):
     """

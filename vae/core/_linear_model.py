@@ -1,3 +1,11 @@
+##############################################################
+# Author : Caleb Fink
+# 
+# This is mostly just a re-working of the PyTorch example 
+# for a VAE. Currently not compatible with the Trainer object.
+###############################################################
+
+
 import torch
 import torch.utils.data
 from torch import nn, optim

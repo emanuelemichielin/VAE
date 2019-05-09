@@ -1,3 +1,13 @@
+###############################################################
+# Author : Caleb Fink
+# 5/9/19
+#
+# This file contains utility functions that are will be commonly
+# used. Functions for getting the shape on convolutional layers, 
+# and dimentionality reduction tools for PCA and t-SNE. 
+# they are all avilaible in vae.utils
+###############################################################
+
 import numpy as np
 import pandas as pd
 from glob import glob
@@ -5,6 +15,7 @@ import pickle as pkl
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 import vae
+import math
 
 __all__ = ["get_scale_factor", 
            "get_conv_shape", 

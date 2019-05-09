@@ -1,3 +1,12 @@
+###############################################################
+# Author : Caleb Fink
+# 5/9/19
+#
+# This file contains usefull globa paths to processed and raw 
+# data, as well as all the names of the labels for the calibrated
+# PD2 dataset. All are available from base import
+###############################################################
+
 TRACE_PATH = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/Run44_v2/traces/'
 META_PATH = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/Run44_v2/metadata/'
 LABEL_PATH = '/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/Run44_v2/labels/'

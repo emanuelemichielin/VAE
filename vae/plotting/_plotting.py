@@ -1,3 +1,12 @@
+###############################################################
+# Author : Caleb Fink
+# 5/9/19
+#
+# This file contains plotting functions functions for plotting
+# the loss, reconstructed events, and latent space representations
+# These are all avilable from the base import
+###############################################################
+
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from matplotlib import colors
@@ -69,13 +78,13 @@ def plot_loss(trainer=None, training_loss=None,
     ax.tick_params(which = 'both', tickdir = 'in', top = True, 
                        right = True)
     ax.set_title('Loss vs Number of Training Steps')
-    if nepochs is not None:
-        for ep in range(1, nepochs+1):
-            if ep == 1:
-                ax.axvline(ep*nper_epoch, linestyle = ':', alpha = 0.1, color = 'g',
-                          label = 'Epoch')
-            else:
-                ax.axvline(ep*nper_epoch, linestyle = ':', alpha = 0.1, color = 'g')
+#     if nepochs is not None:
+#         for ep in range(1, nepochs+1):
+#             if ep == 1:
+#                 ax.axvline(ep*nper_epoch, linestyle = ':', alpha = 0.1, color = 'g',
+#                           label = 'Epoch')
+#             else:
+#                 ax.axvline(ep*nper_epoch, linestyle = ':', alpha = 0.1, color = 'g')
 
     ax.set_yscale('log')
     ax.legend()
