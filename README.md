@@ -4,6 +4,8 @@ Collection of tools for testing the idea of using a Variational autoencoder for 
 
 The tools can be generalized to any single or multi-channel time series data, but most of the IO functionality of this module at the moment only applies to (private) data from a UCB Pyle group R&D detector called PD2.
 
+It is highly recommended that this be run on a system with a GPU and multiple CPUs.
+
 ### installation
 
 To install and use these tools, from the top level directory do the following in the command line:
