@@ -20,7 +20,7 @@ Among the standard packages included with Anaconda, the following dependencies a
 ```
 Except `RQpy` which is not yet avaliable on PyPi. To install `RQpy` clone the repository https://github.com/ucbpylegroup/RQpy and follow the install instructions in the README.md. It is also recommended that the most current development version of `QETpy` is used, which can be cloned and installed from https://github.com/ucbpylegroup/QETpy
 
-Both `QETpy` and `RQpy` are only used processing raw data. 
+Both `QETpy` and `RQpy` are only used for processing raw data. These will be made into optional dependancies later.
 
 ### Usage 
 
@@ -30,17 +30,25 @@ There are two useful files in `working_dir/model_dev/` that will demostrate the 
 `visualize_trained_models.ipynb` is a Jupyter notebook used to load saved models and test performace
 
 All the main functions and classes in the module are available in `vae/core/`. The primary tools include:
+
 *`PD2dataset` : A dataset object to be used with `PyTorches` data loader
+
 *`VAE` : A CNN based Varational Autoencoder model class
+
 *`beta_mse_loss` : A $\beta$ VAE loss function
+
 *`Trainer` : A class used for training models. This object performs the optimization and calculation of training/validataion loss. It also supports loading saved model and optimizer checkpoints
 
 Also available from the base import are a few plotting functions
-*`plot_loss` : Plots the loss vs training ste
+
+*`plot_loss` : Plots the loss vs training step
+
 *`plot_recon` : Makes plots of original and reconstructed events
+
 *`plot_latent_2d` : Plots a 2d scatter plot of the latent space variables
 
 Some of the functions in `vae/utils/` may be helpful, particularly
+
 *`reduce_dims` : performs dimensionality reduction (for the latent variables) using either PCA or t-SNE
 
 
