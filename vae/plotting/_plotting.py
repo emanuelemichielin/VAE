@@ -72,12 +72,12 @@ def plot_loss(trainer=None, training_loss=None,
         ax.plot(np.arange(1, len(test_loss)+1)*nper_epoch,
                 test_loss, label='Validation set')
 
-    ax.set_xlabel('Steps')
-    ax.set_ylabel('Loss')
+    ax.set_xlabel('Steps', fontsize=15)
+    ax.set_ylabel('Loss', fontsize=15)
     ax.grid(True, linestyle='--')
     ax.tick_params(which = 'both', tickdir = 'in', top = True, 
-                       right = True)
-    ax.set_title('Loss vs Number of Training Steps')
+                       right = True, labelsize=15)
+    ax.set_title('Loss vs Number of Training Steps', fontsize=15)
 #     if nepochs is not None:
 #         for ep in range(1, nepochs+1):
 #             if ep == 1:
@@ -145,14 +145,14 @@ def plot_recon(dataloader, model, nplots=10, xlims=None, ylims=None,
             break
     for ii in range(nplots):
         fig, ax = plt.subplots(figsize=(10,6))
-        ax.set_xlabel('Time [Arbitraty Units]')
-        ax.set_ylabel('Amplitude [Arbitrary Units]')
+        ax.set_xlabel('Time [Arbitraty Units]', fontsize=15)
+        ax.set_ylabel('Amplitude [Arbitrary Units]', fontsize=15)
         ax.grid(True, linestyle='--')
         ax.tick_params(which = 'both', tickdir = 'in', top = True, 
-                       right = True)
+                       right = True, labelsize=15)
         ax.plot(x[ii, 0, ], label='original')
         ax.plot(recon_batch[ii, 0, ], label='reconstructed')
-        ax.legend()
+        ax.legend(fontsize=14)
         if xlims is not None:
             ax.set_xlim(xlims)
         if ylims is not None:
@@ -201,17 +201,17 @@ def plot_latent_2d(latent_vars, labels=None, label_name=None, pltkwargs={},
     """
     
     fig, ax = plt.subplots(figsize=(10,6))
-    ax.set_title('Latent Space Representation')
-    ax.set_xlabel('Z_1 [Arbitrary Units]')
-    ax.set_ylabel('Z_2 [Arbitrary Units]')
+    ax.set_title('Latent Space Representation', fontsize=15)
+    ax.set_xlabel('Z_1 [Arbitrary Units]', fontsize=15)
+    ax.set_ylabel('Z_2 [Arbitrary Units]', fontsize=15)
     ax.grid(True, linestyle='--')
     ax.tick_params(which = 'both', tickdir = 'in', top = True, 
-                   right = True)
+                   right = True, labelsize=15)
     if labels is None:
         labels = 'b'
     clr = ax.scatter(latent_vars[:, 0], latent_vars[:, 1], c=labels, **pltkwargs)
     if label_name:
-        fig.colorbar(clr, label=label_name)
+        fig.colorbar(clr, label=label_name, fontsize=15)
         
     if savefig:
         try:

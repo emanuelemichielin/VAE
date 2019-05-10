@@ -84,6 +84,7 @@ class Encoder(nn.Module):
                                       strides[ii], pads[ii], 1)
         # store the shape for use in the forward() method    
         self.convoutshape = convoutshape
+        self.fc_in_shape = chans[3]
         
         # Fully connected layers
         self.fc1 = nn.Linear(chans[3]*convoutshape, chans[4])
@@ -118,7 +119,7 @@ class Encoder(nn.Module):
         x = F.relu(self.conv4(x))
         x = self.bn4(x)
         if self.usedropout: x = F.dropout(x, 0.3);
-        x = x.view(-1, 32*96)
+        x = x.view(-1, self.fc_in_shape*self.convoutshape)
         x = F.relu(self.fc1(x))
         x = self.bn5(x)
         if self.usedropout: x = F.dropout(x, 0.3);
@@ -207,7 +208,7 @@ class Decoder(nn.Module):
         self.conv4 = nn.ConvTranspose1d(chans[3], chans[4], kernels[3], 
                                         strides[3], padding=pads[3])
         
-        self.conv5 = nn.ConvTranspose1d(chans[4], outchans, 7, 1, padding=4)
+        self.conv5 = nn.ConvTranspose1d(chans[4], outchans, final_kernel, 1, padding=final_pad)
         
         self.bn1 = nn.BatchNorm1d(chans[1])
         self.bn2 = nn.BatchNorm1d(chans[2])
