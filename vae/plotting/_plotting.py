@@ -150,8 +150,8 @@ def plot_recon(dataloader, model, nplots=10, xlims=None, ylims=None,
         ax.grid(True, linestyle='--')
         ax.tick_params(which = 'both', tickdir = 'in', top = True, 
                        right = True, labelsize=15)
-        ax.plot(x[ii, 0, ], label='original')
-        ax.plot(recon_batch[ii, 0, ], label='reconstructed')
+        ax.plot(x[ii, 0, ], linewidth=4, label='original')
+        ax.plot(recon_batch[ii, 0, ], linewidth=2, label='reconstructed', alpha=0.9)
         ax.legend(fontsize=14)
         if xlims is not None:
             ax.set_xlim(xlims)
