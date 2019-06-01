@@ -204,7 +204,8 @@ def load_checkpoint(path,
                     loss_kwargs={},
                     savemodel=False,
                     savename='',
-                    ncheckpoints=1):
+                    ncheckpoints=1,
+                    extra_model_params={}):
     """
     Function to load a previously saved model for continued training. 
     This function initalizes and returns a Trainer object. Note, the
@@ -255,6 +256,10 @@ def load_checkpoint(path,
         at the end of training. If 'all', it is 
         saved every epoch. If a list or array is passed,
         it is saved for the corresponding indices. 
+    extra_model_params : dict, optional
+        Any additional optional parameters for the model
+        when initialized, to ensure the shapes of the 
+        layers are correct
     
     Returns
     -------
@@ -266,7 +271,7 @@ def load_checkpoint(path,
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda:0" if use_cuda else "cpu")
     
-    model = vae.VAE(z_dims).to(device)
+    model = vae.VAE(z_dims, **extra_model_params).to(device)
     try:
         checkpoint = torch.load(path)
     except:

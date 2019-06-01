@@ -310,6 +310,7 @@ class VAE(nn.Module):
         self.encoder = Encoder(z_dim=z_dim, 
                                usedropout=usedropout_encode,
                                inputchans=inputchans,
+                               tracelength=tracelength,
                                kernels=kernels,
                                strides=strides,
                                pads=pads,

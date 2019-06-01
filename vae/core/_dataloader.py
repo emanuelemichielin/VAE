@@ -31,7 +31,8 @@ class PD2dataset(data.Dataset):
                  baseline_sub=False,
                  offset=None,
                  map_path='/gpfs/slac/staas/fs1/supercdms/tf/slac/Run44/Run44_v3/file_mapping.h5',
-                 tracelength=925):
+                 tracelength=925,
+                 truncate=812):
         """
         Initialization of data object. eventnumbers
         are stored and will be iterated over and passed
@@ -69,6 +70,9 @@ class PD2dataset(data.Dataset):
         tracelength : int, optional
             The length of the traces being loaded. This is nessesary
             to determine the initial array size for the returned traces.
+        truncate : int, optional
+            The desired length of the trace to be ruturned. Must be 
+            shorter than original trace. 
         """
 
         self.list_IDs = eventnumbers
@@ -85,6 +89,7 @@ class PD2dataset(data.Dataset):
         self.offset = offset
         self.map = pd.read_hdf(map_path,'map')
         self.tracelength = tracelength
+        self.truncate = truncate
 
     def __len__(self):
         """Length of the datapoints in the dataset"""
@@ -112,7 +117,7 @@ class PD2dataset(data.Dataset):
         if self.offset is not None:
             X += self.offset
         X = X.astype(np.float32)
-        X = X[:,0,:]
+        X = X[:,0,:self.truncate]
         if isinstance(self.labels, str):
             labels = io.get_labels(ID, ev_mapping=self.map)
             if self.labels == 'full':

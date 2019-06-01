@@ -211,7 +211,10 @@ def plot_latent_2d(latent_vars, labels=None, label_name=None, pltkwargs={},
         labels = 'b'
     clr = ax.scatter(latent_vars[:, 0], latent_vars[:, 1], c=labels, **pltkwargs)
     if label_name:
-        fig.colorbar(clr, label=label_name, fontsize=15)
+        cbar = fig.colorbar(clr)
+        cbar.ax.tick_params(labelsize=15) 
+        cbar.set_label(label=label_name, size=15)
+
         
     if savefig:
         try:
